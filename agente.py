@@ -5,8 +5,8 @@ criar aqui as funções que respondem às perguntas
 e quaisquer outras que achem necessário criar
 
 colocar aqui os nomes e número de aluno:
-NUM1, NOME1
-NUM2, NOME2
+41558, Guilherme Lopes
+38991, Cristina Pinto
 
 """
 import time
