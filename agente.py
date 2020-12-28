@@ -32,29 +32,6 @@ def getDivisaoInstance(divisoes, id):
     return None
 
 
-coordenadas_divisoes = [
-    ((100, 30), (540, 160)),    # Corredor 1
-    ((30, 70), (100, 300)),     # Corredor 2
-    ((540, 30), (655, 305)),    # Corredor 3
-    ((30, 300), (770, 430)),    # Corredor 4
-
-    ((100, 160), (255, 300)),   # Quarto 5
-    ((255, 160), (405, 300)),   # Quarto 6
-    ((405, 160), (540, 300)),    # Quarto 7
-
-    ((655, 30), (770, 110)),    # Quarto 8
-    ((655, 110), (770, 210)),   # Quarto 9
-    ((655, 210), (770, 305)),   # Quarto 10
-
-    ((30, 430), (255, 570)),    # Quarto 11
-    ((255, 430), (405, 570)),   # Quarto 12
-    ((405, 430), (590, 570)),   # Quarto 13
-    ((590, 430), (770, 570)),   # Quarto 14
-]
-
-corredores = [1, 2, 3, 4]
-
-
 def divisao_Atual(x, y):
     if 100 <= x < 540 and 30 <= y < 160:
         return "Corredor1"
