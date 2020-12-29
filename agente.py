@@ -84,34 +84,49 @@ def work(posicao, bateria, objetos):
     if objetos != []:
         div = getDivisaoInstance(lista_Divisoes, div_Atual)
         div.div_obj(objetos)
+        div.tipar_divisao()
 
 
+# 1. Qual foi a penúltima pessoa que viste?
 def resp1():
     pass
+
+# 2. Em que tipo de sala estás agora?
 
 
 def resp2():
     pass
+
+# 3. Qual o caminho para a sala de enfermeiros mais próxima?
 
 
 def resp3():
     pass
 
 
+# 4. Qual a distância até ao médico mais próximo?
+
 def resp4():
     pass
 
+
+# 5. Quanto tempo achas que demoras a ir de onde estás até às escadas?
 
 def resp5():
     pass
 
 
+# 6. Quanto tempo achas que falta até ficares sem bateria?
+
 def resp6():
     pass
 
 
+# 7. Qual a probabilidade de encontrar um livro numa divisão, se já encontraste uma cadeira?
 def resp7():
     pass
+
+# 8. Se encontrares um enfermeiro numa divisão, qual é a probabilidade de estar lá um doente?
 
 
 def resp8():
