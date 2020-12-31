@@ -12,14 +12,32 @@ colocar aqui os nomes e número de aluno:
 import time
 from divisao import *
 from objeto import Objeto
+import networkx as nx
+import numpy as np
 
-div_Atual = ""
+# Grafo
+G = nx.Graph()
+
+# Divisoes
+lista_Divisoes = [Divisao(100, 540, 30, 160, "Corredor1"), Divisao(30, 100, 70, 300, "Corredor2"),
+                  Divisao(540, 655, 30, 305, "Corredor3"), Divisao(30, 800, 300, 430, "Corredor4"),
+                  Divisao(100, 255, 160, 300, "Quarto5"), Divisao(255, 405, 160, 300, "Quarto6"),
+                  Divisao(405, 540, 160, 300, "Quarto7"), Divisao(655, 800, 30, 110, "Quarto8"),
+                  Divisao(655, 800, 110, 210, "Quarto9"), Divisao(655, 800, 210, 305, "Quarto10"),
+                  Divisao(30, 255, 430, 600, "Quarto11"), Divisao(255, 405, 430, 600, "Quarto12"),
+                  Divisao(405, 590, 430, 600, "Quarto13"), Divisao(590, 770, 430, 600, "Quarto14")]
+
+for divisao in lista_Divisoes:
+    G.add_node(divisao.nomeDivisao)
+
+# Lista de todos os quartos
+div_Atual = None
 
 ## Memória
-lista_Divisoes = []
 lista_objetos_vistos = []
 historico_objetos = []
 historico_tempos = []
+tempo_inicial = time.time()
 
 # útil para a resposta 6
 historico_bateria = []
@@ -38,49 +56,19 @@ def verifica_lista_divisoes(id):
 
 
 # Retorna uma divisão, segundo o ID/nome se existir
-
-
 def get_divisao(_id):
-    global lista_Divisoes
     for div in lista_Divisoes:
         if _id == div.nomeDivisao:
             return div
     return None
 
 
-# TODO: Remover Hard code
-def divisao_Atual(x, y):
-    if 100 <= x < 540 and 30 <= y < 160:
-        return "Corredor1"
-    elif 30 <= x < 100 and 70 <= y < 300:
-        return "Corredor2"
-    elif 540 <= x < 655 and 30 <= y < 305:
-        return "Corredor3"
-    elif 30 <= x < 800 and 300 <= y < 430:
-        return "Corredor4"
-    elif 100 <= x < 255 and 160 <= y < 300:
-        return "Quarto5"
-    elif 255 <= x < 405 and 160 <= y < 300:
-        return "Quarto6"
-    elif 405 <= x < 540 and 160 <= y < 300:
-        return "Quarto7"
-    elif 655 <= x < 800 and 30 <= y < 110:
-        return "Quarto8"
-    elif 655 <= x < 800 and 110 <= y < 210:
-        return "Quarto9"
-    elif 655 <= x < 800 and 210 <= y < 305:
-        return "Quarto10"
-    elif 30 <= x < 255 and 430 <= y < 600:
-        return "Quarto11"
-    elif 255 <= x < 405 and 430 <= y < 600:
-        return "Quarto12"
-    elif 405 <= x < 590 and 430 <= y < 600:
-        return "Quarto13"
-    elif 590 <= x < 770 and 430 <= y < 600:
-        return "Quarto14"
-    else:
-        print("ZONA INVALIDA")
-        return "INVALIDO"
+def get_divisao_atual(x, y):
+    for divisao in lista_Divisoes:
+        if divisao.esta_dentro(x, y):
+            divisao.descoberta = True
+            return divisao
+    print("Error")
 
 
 def adicionar_lista_objetos_vistos(novo_objeto, x, y):
@@ -109,31 +97,28 @@ def adicionar_lista_objetos_vistos(novo_objeto, x, y):
 
 def work(posicao, bateria, objetos):
     global lista_Divisoes, ultimo_objeto_list, historico_bateria, div_Atual
-    if div_Atual == "":
-        div_Atual = divisao_Atual(posicao[0], posicao[1])
+    if div_Atual is None:
+        div_Atual = get_divisao_atual(posicao[0], posicao[1])
 
     # Para a resposta 6.
     historico_bateria.append(bateria)
-    historico_tempos.append(time.time())
+    historico_tempos.append(time.time() - tempo_inicial)
 
-    nova_divisao = divisao_Atual(posicao[0], posicao[1])
+    nova_divisao = get_divisao_atual(posicao[0], posicao[1])
 
     # Para sabermos a localização de portas e interceção de corredores
-
-    # Para descobrirmos portas
     if nova_divisao != div_Atual:
-        nome_intercecao = "intercecao_" + nova_divisao + "_" + div_Atual
+        nome_intercecao = "intercecao_" + nova_divisao.nomeDivisao + "_" + div_Atual.nomeDivisao
         adicionar_lista_objetos_vistos(nome_intercecao, posicao[0], posicao[1])
 
     div_Atual = nova_divisao
+    # -----
 
     if ultimo_objeto_list != objetos and objetos != [] and objetos is not None:
         for objeto in objetos:
             historico_objetos.append(objeto)
             adicionar_lista_objetos_vistos(objeto, posicao[0], posicao[1])
-        div = get_divisao(div_Atual)
-        div.div_obj(objetos)
-        div.tipar_divisao()
+        div_Atual.div_obj(objetos)
 
     if objetos:
         ultimo_objeto_list = objetos
@@ -160,13 +145,13 @@ def resp1():
 
 # 2. Em que tipo de sala estás agora?
 def resp2():
-    div = get_divisao(div_Atual)
-    print(div.get_tipo())
-    pass
+    print(div_Atual.get_tipo())
 
 
 # 3. Qual o caminho para a sala de enfermeiros mais próxima?
 def resp3():
+    # REMOVER
+    print(div_Atual.__dict__)
     pass
 
 
@@ -186,9 +171,9 @@ def resp5():
 # 6. Quanto tempo achas que falta até ficares sem bateria?
 
 def resp6():
-    for i in range(len(historico_bateria)):
-        print(f"{i}, {historico_bateria[i]}")
-    pass
+    trend = np.polyfit(historico_tempos, historico_bateria, 3)
+    trendpoly = np.poly1d(trend)
+    print([x for x in trendpoly.roots if x > 0][0], "segundos")
 
 
 # 7. Qual a probabilidade de encontrar um livro numa divisão, se já encontraste uma cadeira?
@@ -197,7 +182,19 @@ def resp7():
 
 
 # 8. Se encontrares um enfermeiro numa divisão, qual é a probabilidade de estar lá um doente?
-
-
 def resp8():
+    # Só queremos ver as divisões já vistas
+
+    # Número de divisões com enfermeiros
+    nB = 0
+
+    # Número de divisões com enfermeiros e doentes
+    nAiB = 0
+    for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
+        if len(divisao.objetos["enfermeiros"]) > 0:
+            nB = nB + 1
+            if len(divisao.objetos["doentes"]) > 0:
+                nAiB = nAiB + 1
+
+    print(nAiB // nB)
     pass

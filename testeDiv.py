@@ -1,5 +1,6 @@
 from divisao import *
 
+"""
 div = Divisao()
 
 
@@ -12,3 +13,12 @@ div.div_obj(b)
 div.tipar_divisao()
 
 print(div.tipoDivisao)
+"""
+
+
+div = Divisao(100, 540, 30, 160, "Corredor1")
+
+print(div.esta_dentro(100, 100))
+
+
+

@@ -1,8 +1,7 @@
 class Divisao:
 
-    def __init__(self, id, x0, x1, y0, y1):
+    def __init__(self, x0, x1, y0, y1, id):
 
-        self.tipoDivisao = ""
         self.nomeDivisao = id
         self.descoberta = False
 
@@ -58,6 +57,7 @@ class Divisao:
         else:
             return "generico"
 
+    # Redundante
     def tipar_divisao(self):
         if len(self.objetos["camas"]) > 0:
             self.tipoDivisao = "quarto"
@@ -73,5 +73,6 @@ class Divisao:
         # • sala de espera: tem mais de 2 cadeiras e não tem mesas nem camas
 
     def esta_dentro(self, x, y):
-        if self.x1 <= x < self.x0 and self.x1 <= x < self.x0:
+        if self.x0 <= x < self.x1 and self.y0 <= y < self.y1:
             return True
+        return False
