@@ -1,9 +1,22 @@
 class Divisao:
 
-    def __init__(self, id):
+    def __init__(self, id, x0, x1, y0, y1):
 
         self.tipoDivisao = ""
         self.nomeDivisao = id
+        self.descoberta = False
+
+        # Área da divisao
+        #  x0,y0
+        #
+        #
+        #           x1,y1
+        self.x0 = x0
+        self.x1 = x1
+        self.y0 = y0
+        self.y1 = y1
+
+        self.medio = (round((((x0 - x1) / 2) + x1), 2), round((((y0 - y1) / 2) + y1), 2))
 
         self.objetos = {
             "cadeiras": [],
@@ -16,6 +29,7 @@ class Divisao:
         }
 
     # TODO: Fazer uma classe de "objetos" para tratar isto melhor
+    # TODO: Remover for, porque já há um for no agente.py
     def div_obj(self, lista_objetos):
         for objeto in lista_objetos:
             nomes = objeto.split("_", 1)
@@ -57,3 +71,7 @@ class Divisao:
         # • quarto: tem sempre pelo menos uma cama
         # • sala de enfermeiros: não tem camas e tem cadeiras e mesas
         # • sala de espera: tem mais de 2 cadeiras e não tem mesas nem camas
+
+    def esta_dentro(self, x, y):
+        if self.x1 <= x < self.x0 and self.x1 <= x < self.x0:
+            return True
