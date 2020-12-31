@@ -15,6 +15,7 @@ class Divisao:
             "doentes": []
         }
 
+    # TODO: Fazer uma classe de "objetos" para tratar isto melhor
     def div_obj(self, lista_objetos):
         for objeto in lista_objetos:
             nomes = objeto.split("_", 1)
@@ -32,6 +33,16 @@ class Divisao:
                 self.objetos["medicos"].append(nomes[1])
             elif nomes[0] == "doente" and nomes[1] not in self.objetos["doentes"]:
                 self.objetos["doentes"].append(nomes[1])
+
+    def get_tipo(self):
+        if len(self.objetos["camas"]) > 0:
+            return "quarto"
+        elif len(self.objetos["cadeiras"]) > 0 and len(self.objetos["mesas"]) > 0:
+            return "sala_Enfermeiros"
+        elif len(self.objetos["cadeiras"]) > 2 and len(self.objetos["mesas"]) == 0:
+            return "sala_Espera"
+        else:
+            return "generico"
 
     def tipar_divisao(self):
         if len(self.objetos["camas"]) > 0:

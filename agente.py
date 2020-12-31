@@ -12,7 +12,21 @@ colocar aqui os nomes e número de aluno:
 import time
 from divisao import *
 
+# Atual
+
+posicao_atual = []
+bateria_atual = []
+
+## Memória
 lista_Divisoes = []
+historico_objetos = []
+historico_tempos = []
+
+# útil para a resposta 6
+historico_bateria = []
+
+# Para evitar duplicados
+ultimo_objeto_list = []
 
 
 # Verifica se o nome de uma divisão (ID) já foi adicionada à lista de divisões
@@ -21,6 +35,7 @@ def verificaListaDivisoes(divisoes, id):
         if id == div.nomeDivisao:
             return True
     return False
+
 
 # Retorna uma divisão, segundo o ID/nome se existir
 
@@ -32,6 +47,7 @@ def getDivisaoInstance(divisoes, id):
     return None
 
 
+# TODO: Remover Hard code
 def divisao_Atual(x, y):
     if 100 <= x < 540 and 30 <= y < 160:
         return "Corredor1"
@@ -63,42 +79,76 @@ def divisao_Atual(x, y):
         return "Quarto14"
 
 
+# esta função é invocada em cada ciclo de clock
+# e pode servir para armazenar informação recolhida pelo agente
+# recebe:
+# posicao = a posição atual do agente, uma lista [X,Y]
+# bateria = valor de energia na bateria, um número inteiro >= 0
+# objetos = o nome do(s) objeto(s) próximos do agente, uma string
+
+# podem achar o tempo atual usando, p.ex.
+# time.time()
 def work(posicao, bateria, objetos):
-    # esta função é invocada em cada ciclo de clock
-    # e pode servir para armazenar informação recolhida pelo agente
-    # recebe:
-    # posicao = a posição atual do agente, uma lista [X,Y]
-    # bateria = valor de energia na bateria, um número inteiro >= 0
-    # objetos = o nome do(s) objeto(s) próximos do agente, uma string
+    global lista_Divisoes, ultimo_objeto_list, historico_bateria, div_Atual
 
-    # podem achar o tempo atual usando, p.ex.
-    # time.time()
+    posicao_atual = posicao
+    bateria_atual = bateria
 
-    global lista_Divisoes
+    historico_bateria.append(bateria)
 
-    div_Atual = divisao_Atual(posicao[0], posicao[1])
+    # Para a resposta 6.
+    historico_tempos.append(time.time())
+
+    nova_divisao = divisao_Atual(posicao[0], posicao[1])
+
+    #Para sabermos a localização de portas e interceção de corredores
+    if nova_divisao != div_Atual:
+        # Vemos se este ponto de interesse já está na lista de pontos do grafo
+
+
+    div_Atual = nova_divisao
 
     if not verificaListaDivisoes(lista_Divisoes, div_Atual):
         lista_Divisoes.append(Divisao(div_Atual))
 
-    if objetos != []:
+    if ultimo_objeto_list != objetos and objetos != []:
+        for objeto in objetos:
+            historico_objetos.append(objeto)
         div = getDivisaoInstance(lista_Divisoes, div_Atual)
         div.div_obj(objetos)
         div.tipar_divisao()
 
+    if objetos:
+        ultimo_objeto_list = objetos
+
 
 # 1. Qual foi a penúltima pessoa que viste?
+# Ou seja, procurar na lista por Doentes, Enfermeiros ou Médicos
 def resp1():
+    # Como queremos saber o penúltimo temos de saber qual foi o último
+    ultimo = ""
+    # [::-1] tem o propósito de reverter a lista, porque novos objetos são adicionados ao fim da lista
+    for objeto in historico_objetos[::-1]:
+
+        # in para verificarmos se é uma pessoa
+        if objeto.split("_", 1)[0] in ["enfermeiro", "medico", "doente"]:
+
+            # queremos saber qual foi o último para saber quem vem a seguir
+            if ultimo != "" and ultimo != objeto:
+                print(objeto)
+                break
+            ultimo = objeto
     pass
+
 
 # 2. Em que tipo de sala estás agora?
-
-
 def resp2():
+    div = getDivisaoInstance(lista_Divisoes, div_Atual)
+    print(div.get_tipo())
     pass
 
-# 3. Qual o caminho para a sala de enfermeiros mais próxima?
 
+# 3. Qual o caminho para a sala de enfermeiros mais próxima?
 
 def resp3():
     pass
@@ -119,12 +169,15 @@ def resp5():
 # 6. Quanto tempo achas que falta até ficares sem bateria?
 
 def resp6():
+    for i in range(len(historico_bateria)):
+        print(f"{i}, {historico_bateria[i]}")
     pass
 
 
 # 7. Qual a probabilidade de encontrar um livro numa divisão, se já encontraste uma cadeira?
 def resp7():
     pass
+
 
 # 8. Se encontrares um enfermeiro numa divisão, qual é a probabilidade de estar lá um doente?
 
