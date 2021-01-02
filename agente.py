@@ -9,6 +9,11 @@ colocar aqui os nomes e número de aluno:
 38991, Cristina Pinto
 
 """
+
+# TODO Limpar código, criar perguntas novas
+# TODO Limpar principalmente as perguntas que usam gráficos, muito código duplicado
+# TODO Corrigir a 8
+
 import matplotlib.pyplot as plt
 
 import time
@@ -35,13 +40,16 @@ for divisao in lista_Divisoes:
 
 # Lista de todos os quartos
 div_Atual = None
-posicao_atual = [-1, -1]
+posicao_atual = None
 
 ## Memória
 lista_objetos_vistos = []
 historico_objetos = []
 historico_tempos = []
+historico_velocidades = []
 tempo_inicial = time.time()
+ultimo_tempo = time.time()
+posicao_track = [-1, -1]
 
 # útil para a resposta 6
 historico_bateria = []
@@ -121,6 +129,15 @@ def ligar_vizinhos(grafo, intersecao, node, intersecaox, intersecaoy):
     pass
 
 
+# 0,0, 180,85
+meio_escadas = (round((((0 - 180) / 2) + 180), 2), round((((0 - 85) / 2) + 85), 2))
+G.add_node("escadas", pos=meio_escadas)
+G.add_edge(lista_Divisoes[0].nomeDivisao, "escadas",
+           pos=distance_between_points(*meio_escadas, *lista_Divisoes[0].medio))
+G.add_edge(lista_Divisoes[1].nomeDivisao, "escadas",
+           pos=distance_between_points(*meio_escadas, *lista_Divisoes[1].medio))
+
+
 # esta função é invocada em cada ciclo de clock
 # e pode servir para armazenar informação recolhida pelo agente
 # recebe:
@@ -132,9 +149,15 @@ def ligar_vizinhos(grafo, intersecao, node, intersecaox, intersecaoy):
 # time.time()
 
 def work(posicao, bateria, objetos):
-    global lista_Divisoes, ultimo_objeto_list, historico_bateria, div_Atual, G, posicao_atual
-
+    global lista_Divisoes, ultimo_objeto_list, historico_bateria, div_Atual, G, posicao_atual, ultimo_tempo, tick_wait, posicao_track
     posicao_atual = posicao
+
+    if posicao_track[0] != posicao[0] and posicao_track[1] != posicao[1]:
+        distancia = distance_between_points(posicao[0], posicao[1], posicao_track[0], posicao_track[1])
+        velocidade = distancia / (time.time() - ultimo_tempo)
+        posicao_track = posicao.copy()
+        historico_velocidades.append(velocidade)
+        ultimo_tempo = time.time()
 
     if div_Atual is None:
         div_Atual = get_divisao_atual(posicao[0], posicao[1])
@@ -143,8 +166,6 @@ def work(posicao, bateria, objetos):
     historico_bateria.append(bateria)
     historico_tempos.append(time.time() - tempo_inicial)
 
-    print(bateria)
-    
     nova_divisao = get_divisao_atual(posicao[0], posicao[1])
 
     # Para sabermos a localização de portas e interceção de corredores
@@ -177,7 +198,7 @@ def work(posicao, bateria, objetos):
                            weight=distance_between_points(div_Atual.medio[0], div_Atual.medio[1], posicao[0],
                                                           posicao[1]))
 
-        div_Atual.div_obj(objetos)
+            div_Atual.div_obj(objeto)
 
     if objetos:
         ultimo_objeto_list = objetos
@@ -209,6 +230,9 @@ def resp2():
 
 # 3. Qual o caminho para a sala de enfermeiros mais próxima?
 def resp3():
+    # TODO: Usar o mesmo método usado na resp4(), só para calcular a mais perto e depois de calcular a mais perto
+    #  usar o método que já está para escrever o caminho
+
     # Assumo que seja preciso a definição de um grafo, para sabermos quais os caminhos possiveis
     # Adicionar temporáriamente a nossa posição para fazer cálculos
     G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
@@ -271,21 +295,50 @@ def resp4():
     lista = list(G.edges("EU"))
     G.remove_edges_from(lista)
     G.remove_node("EU")
-    pass
 
 
 # 5. Quanto tempo achas que demoras a ir de onde estás até às escadas?
 
 def resp5():
-    mostrar_grafo(G)
+    if not historico_velocidades:
+        print("Erro na velocidade, mexa o robot")
+        return
+
+    # ADICIONAR VIZINHOS ÁS INTERSEÇÔES
+    G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
+    tempG = G.copy()
+
+    for divisao in lista_Divisoes:
+        for neighbors in tempG.neighbors(divisao.nomeDivisao):
+            pos = tempG.nodes[neighbors]["pos"]
+            ligar_vizinhos(tempG, neighbors, divisao.nomeDivisao, pos[0], pos[1])
+
+    distancia = nx.shortest_path_length(tempG, "EU", "escadas", weight='weight')
+
+    print("Tempo:", distancia / np.average(historico_velocidades), "Segundos")
+
+    lista = list(G.edges("EU"))
+    G.remove_edges_from(lista)
+    G.remove_node("EU")
+    average_velocity = np.average(historico_velocidades)
+    print(average_velocity)
 
 
 # 6. Quanto tempo achas que falta até ficares sem bateria?
 
 def resp6():
-    trend = np.polyfit(historico_tempos, historico_bateria, 3)
+    # TODO ACABAR ESTA
+    trend = np.polyfit(historico_tempos, historico_bateria, 2)
     trendpoly = np.poly1d(trend)
-    print([x for x in trendpoly.roots if x > 0][0], "segundos")
+    # print([x for x in trendpoly.roots if x > 0][0], "segundos")
+    roots = [x for x in trendpoly.roots if x > 0]
+    ultima_time_stamp = historico_tempos[len(historico_tempos) - 1]
+    print(roots)
+    print("Faltam ", str(int(roots[0]) - ultima_time_stamp), "segundos")
+    plt.plot(historico_tempos, historico_bateria, '.')
+    plt.plot(historico_tempos, trendpoly(historico_tempos))
+    plt.show()
 
 
 # 7. Qual a probabilidade de encontrar um livro numa divisão, se já encontraste uma cadeira?
