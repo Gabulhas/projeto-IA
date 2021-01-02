@@ -9,7 +9,10 @@ colocar aqui os nomes e número de aluno:
 38991, Cristina Pinto
 
 """
+import matplotlib.pyplot as plt
+
 import time
+import math
 from divisao import *
 from objeto import Objeto
 import networkx as nx
@@ -25,13 +28,14 @@ lista_Divisoes = [Divisao(100, 540, 30, 160, "Corredor1"), Divisao(30, 100, 70, 
                   Divisao(405, 540, 160, 300, "Quarto7"), Divisao(655, 800, 30, 110, "Quarto8"),
                   Divisao(655, 800, 110, 210, "Quarto9"), Divisao(655, 800, 210, 305, "Quarto10"),
                   Divisao(30, 255, 430, 600, "Quarto11"), Divisao(255, 405, 430, 600, "Quarto12"),
-                  Divisao(405, 590, 430, 600, "Quarto13"), Divisao(590, 770, 430, 600, "Quarto14")]
+                  Divisao(405, 590, 430, 600, "Quarto13"), Divisao(590, 800, 430, 600, "Quarto14")]
 
 for divisao in lista_Divisoes:
-    G.add_node(divisao.nomeDivisao)
+    G.add_node(divisao.nomeDivisao, pos=divisao.medio)
 
 # Lista de todos os quartos
 div_Atual = None
+posicao_atual = [-1, -1]
 
 ## Memória
 lista_objetos_vistos = []
@@ -44,6 +48,23 @@ historico_bateria = []
 
 # Para evitar duplicados
 ultimo_objeto_list = []
+intersecoes = []
+
+
+def mostrar_grafo(grafo):
+    grafo.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    ligar_vizinhos(grafo, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
+
+    # TEMPORÁRIO
+    plt.gca().invert_yaxis()
+    pos = nx.get_node_attributes(grafo, 'pos')
+    nx.draw(grafo, pos, node_size=10, node_color='yellow', font_size=8, font_weight='bold', with_labels=True)
+    plt.show()
+    plt.savefig("Graph.png", format="PNG")
+
+    lista = list(grafo.edges("EU"))
+    grafo.remove_edges_from(lista)
+    grafo.remove_node("EU")
 
 
 # Verifica se o nome de uma divisão (ID) já foi adicionada à lista de divisões
@@ -71,7 +92,13 @@ def get_divisao_atual(x, y):
     print("Error")
 
 
+def distance_between_points(ax, ay, bx, by):
+    return round(math.hypot(ax - bx, ay - by), 2)
+
+
+# Retorna um boolean que confirma se o objeto já estava na lista
 def adicionar_lista_objetos_vistos(novo_objeto, x, y):
+    global lista_objetos_vistos
     nomes = novo_objeto.split("_", 1)
     if nomes[0] == "intercecao":
         # Evita que ao passar pela intercecao pelas duas direcoes que tenha nome diferente
@@ -81,8 +108,17 @@ def adicionar_lista_objetos_vistos(novo_objeto, x, y):
 
     for objeto_visto in lista_objetos_vistos:
         if novo_objeto == objeto_visto.identificacao:
-            return
+            return False
     lista_objetos_vistos.append(Objeto(novo_objeto, x, y))
+    return True
+
+
+def ligar_vizinhos(grafo, intersecao, node, intersecaox, intersecaoy):
+    for neighbor in grafo.neighbors(node):
+        vizinho_pos = grafo.nodes[neighbor]["pos"]
+        grafo.add_edge(intersecao, neighbor,
+                       weight=distance_between_points(intersecaox, intersecaoy, vizinho_pos[0], vizinho_pos[1]))
+    pass
 
 
 # esta função é invocada em cada ciclo de clock
@@ -96,7 +132,10 @@ def adicionar_lista_objetos_vistos(novo_objeto, x, y):
 # time.time()
 
 def work(posicao, bateria, objetos):
-    global lista_Divisoes, ultimo_objeto_list, historico_bateria, div_Atual
+    global lista_Divisoes, ultimo_objeto_list, historico_bateria, div_Atual, G, posicao_atual
+
+    posicao_atual = posicao
+
     if div_Atual is None:
         div_Atual = get_divisao_atual(posicao[0], posicao[1])
 
@@ -104,12 +143,27 @@ def work(posicao, bateria, objetos):
     historico_bateria.append(bateria)
     historico_tempos.append(time.time() - tempo_inicial)
 
+    print(bateria)
+    
     nova_divisao = get_divisao_atual(posicao[0], posicao[1])
 
     # Para sabermos a localização de portas e interceção de corredores
     if nova_divisao != div_Atual:
-        nome_intercecao = "intercecao_" + nova_divisao.nomeDivisao + "_" + div_Atual.nomeDivisao
-        adicionar_lista_objetos_vistos(nome_intercecao, posicao[0], posicao[1])
+        divisoes = sorted([nova_divisao.nomeDivisao, div_Atual.nomeDivisao])
+
+        nome_intercecao = "intercecao_" + divisoes[0] + "_" + divisoes[1]
+        if nome_intercecao not in intersecoes:
+            intersecoes.append(nome_intercecao)
+            # adicionar as restantes intersecoes a esta intercecao
+            G.add_node(nome_intercecao, pos=(posicao[0], posicao[1]))
+            G.add_edge(nova_divisao.nomeDivisao, nome_intercecao,
+                       weight=distance_between_points(nova_divisao.medio[0], nova_divisao.medio[1], posicao[0],
+                                                      posicao[1]))
+            G.add_edge(div_Atual.nomeDivisao, nome_intercecao,
+                       weight=distance_between_points(div_Atual.medio[0], div_Atual.medio[1], posicao[0], posicao[1]))
+
+        # ligar_vizinhos(nome_intercecao, nova_divisao.nomeDivisao, posicao[0], posicao[1])
+        # ligar_vizinhos(nome_intercecao, div_Atual.nomeDivisao, posicao[0], posicao[1])
 
     div_Atual = nova_divisao
     # -----
@@ -117,7 +171,12 @@ def work(posicao, bateria, objetos):
     if ultimo_objeto_list != objetos and objetos != [] and objetos is not None:
         for objeto in objetos:
             historico_objetos.append(objeto)
-            adicionar_lista_objetos_vistos(objeto, posicao[0], posicao[1])
+            if adicionar_lista_objetos_vistos(objeto, posicao[0], posicao[1]):
+                G.add_node(objeto, pos=(posicao[0], posicao[1]))
+                G.add_edge(div_Atual.nomeDivisao, objeto,
+                           weight=distance_between_points(div_Atual.medio[0], div_Atual.medio[1], posicao[0],
+                                                          posicao[1]))
+
         div_Atual.div_obj(objetos)
 
     if objetos:
@@ -150,22 +209,75 @@ def resp2():
 
 # 3. Qual o caminho para a sala de enfermeiros mais próxima?
 def resp3():
-    # REMOVER
-    print(div_Atual.__dict__)
-    pass
+    # Assumo que seja preciso a definição de um grafo, para sabermos quais os caminhos possiveis
+    # Adicionar temporáriamente a nossa posição para fazer cálculos
+    G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
+
+    div_mais_perto = None
+    distancia_mais_perto = 2000000000
+
+    for divs in lista_Divisoes:
+        if divs.get_tipo() == "sala_Enfermeiros":
+            distancia = nx.shortest_path_length(G, "EU", divs.nomeDivisao, weight='weight')
+            if distancia_mais_perto > distancia:
+                distancia_mais_perto = distancia
+                div_mais_perto = divs
+
+    if not div_mais_perto:
+        print("Sala Enfermeiros não encotrada")
+        return
+
+    for parts in nx.shortest_path(G, "EU", div_mais_perto.nomeDivisao):
+        # Talvez isto não seja necessário
+        if "_" not in parts:
+            print(parts, end="->")
+
+    lista = list(G.edges("EU"))
+    G.remove_edges_from(lista)
+    G.remove_node("EU")
+    mostrar_grafo(G)
 
 
 # 4. Qual a distância até ao médico mais próximo?
 def resp4():
-    for objeto in lista_objetos_vistos:
-        print(objeto)
+    # ADICIONAR VIZINHOS ÁS INTERSEÇÔES
+    G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
+    tempG = G.copy()
+
+    for divisao in lista_Divisoes:
+        for neighbors in tempG.neighbors(divisao.nomeDivisao):
+            pos = tempG.nodes[neighbors]["pos"]
+            ligar_vizinhos(tempG, neighbors, divisao.nomeDivisao, pos[0], pos[1])
+
+    medico_mais_perto = None
+    distancia_mais_perto = 2000000000
+
+    for objs in lista_objetos_vistos:
+        if objs.tipo == "medico":
+            distancia = nx.shortest_path_length(tempG, "EU", objs.identificacao, weight='weight')
+            if distancia_mais_perto > distancia:
+                distancia_mais_perto = distancia
+                medico_mais_perto = objs
+
+    if not medico_mais_perto:
+        print("Nenhum médico encontrado")
+    else:
+
+        print(medico_mais_perto.nome, distancia_mais_perto)
+
+    mostrar_grafo(tempG)
+    lista = list(G.edges("EU"))
+    G.remove_edges_from(lista)
+    G.remove_node("EU")
     pass
 
 
 # 5. Quanto tempo achas que demoras a ir de onde estás até às escadas?
 
 def resp5():
-    pass
+    mostrar_grafo(G)
 
 
 # 6. Quanto tempo achas que falta até ficares sem bateria?
@@ -178,11 +290,32 @@ def resp6():
 
 # 7. Qual a probabilidade de encontrar um livro numa divisão, se já encontraste uma cadeira?
 def resp7():
-    pass
+    pC = 0  # existir uma cadeira na divisão
+    pLC = 0  # pelo menos 1 livro e 1 cadeira na mesma div
+    tot = 0
+
+    # probabilidade condicionada (encontrar um livro, sabendo que já foi encontrada uma cadeira)
+    # P(Livro | Cadeira) = P (LeC) / P(C)
+
+    for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
+        tot = tot + 1
+        if len(divisao.objetos["cadeiras"] > 0):
+            pC = pC + 1
+            if len(divisao.objetos["livros"] > 0):
+                pLC = pLC + 1
+
+    pLC = pLC / pC  # prob de encontrar livro em todas as div que têm cadeiras
+    pC = pC / tot  # prob de ter uma cadeira em todas as divisões
+
+    print(pLC / pC)
+
+    # if len(divisao.objetos["livros"] > 0) and len(divisao.objetos["cadeiras"] > 0):
+    #     pLC = pLC + 1
 
 
 # 8. Se encontrares um enfermeiro numa divisão, qual é a probabilidade de estar lá um doente?
 def resp8():
+    # Isto deve estar errado!
     # Só queremos ver as divisões já vistas
 
     # Número de divisões com enfermeiros
@@ -190,7 +323,11 @@ def resp8():
 
     # Número de divisões com enfermeiros e doentes
     nAiB = 0
-    for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
+
+    divisões_visitadas = [divisao for divisao in lista_Divisoes if divisao.descoberta]
+
+    for divisao in divisões_visitadas:
+
         if len(divisao.objetos["enfermeiros"]) > 0:
             nB = nB + 1
             if len(divisao.objetos["doentes"]) > 0:
