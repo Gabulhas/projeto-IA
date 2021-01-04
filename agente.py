@@ -13,6 +13,7 @@ colocar aqui os nomes e número de aluno:
 # TODO Limpar código, criar perguntas novas
 # TODO Limpar principalmente as perguntas que usam gráficos, muito código duplicado
 # TODO Corrigir a 8
+# TODO limpar código de mostar plots
 
 import matplotlib.pyplot as plt
 
@@ -183,9 +184,6 @@ def work(posicao, bateria, objetos):
             G.add_edge(div_Atual.nomeDivisao, nome_intercecao,
                        weight=distance_between_points(div_Atual.medio[0], div_Atual.medio[1], posicao[0], posicao[1]))
 
-        # ligar_vizinhos(nome_intercecao, nova_divisao.nomeDivisao, posicao[0], posicao[1])
-        # ligar_vizinhos(nome_intercecao, div_Atual.nomeDivisao, posicao[0], posicao[1])
-
     div_Atual = nova_divisao
     # -----
 
@@ -230,11 +228,6 @@ def resp2():
 
 # 3. Qual o caminho para a sala de enfermeiros mais próxima?
 def resp3():
-    # TODO: Usar o mesmo método usado na resp4(), só para calcular a mais perto e depois de calcular a mais perto
-    #  usar o método que já está para escrever o caminho
-
-    # Assumo que seja preciso a definição de um grafo, para sabermos quais os caminhos possiveis
-    # Adicionar temporáriamente a nossa posição para fazer cálculos
     G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
     ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
 
@@ -249,18 +242,26 @@ def resp3():
                 div_mais_perto = divs
 
     if not div_mais_perto:
-        print("Sala Enfermeiros não encotrada")
+        print("Sala Enfermeiros não encontrada")
         return
 
     for parts in nx.shortest_path(G, "EU", div_mais_perto.nomeDivisao):
         # Talvez isto não seja necessário
-        if "_" not in parts:
+        if "_" not in parts or parts not in ["EU", "escadas"]:
             print(parts, end="->")
 
     lista = list(G.edges("EU"))
     G.remove_edges_from(lista)
     G.remove_node("EU")
     mostrar_grafo(G)
+    print("")
+
+
+def ligar_todos_vizinhos(grafo):
+    for divisao in lista_Divisoes:
+        for neighbors in grafo.neighbors(divisao.nomeDivisao):
+            pos = grafo.nodes[neighbors]["pos"]
+            ligar_vizinhos(grafo, neighbors, divisao.nomeDivisao, pos[0], pos[1])
 
 
 # 4. Qual a distância até ao médico mais próximo?
@@ -269,11 +270,7 @@ def resp4():
     G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
     ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
     tempG = G.copy()
-
-    for divisao in lista_Divisoes:
-        for neighbors in tempG.neighbors(divisao.nomeDivisao):
-            pos = tempG.nodes[neighbors]["pos"]
-            ligar_vizinhos(tempG, neighbors, divisao.nomeDivisao, pos[0], pos[1])
+    ligar_todos_vizinhos(tempG)
 
     medico_mais_perto = None
     distancia_mais_perto = 2000000000
@@ -321,15 +318,13 @@ def resp5():
     lista = list(G.edges("EU"))
     G.remove_edges_from(lista)
     G.remove_node("EU")
-    average_velocity = np.average(historico_velocidades)
-    print(average_velocity)
 
 
 # 6. Quanto tempo achas que falta até ficares sem bateria?
 
 def resp6():
     # TODO ACABAR ESTA
-    trend = np.polyfit(historico_tempos, historico_bateria, 2)
+    trend = np.polyfit(historico_tempos, historico_bateria, 1)
     trendpoly = np.poly1d(trend)
     # print([x for x in trendpoly.roots if x > 0][0], "segundos")
     roots = [x for x in trendpoly.roots if x > 0]
@@ -368,8 +363,8 @@ def resp7():
 
 # 8. Se encontrares um enfermeiro numa divisão, qual é a probabilidade de estar lá um doente?
 def resp8():
-    # Isto deve estar errado!
-    # Só queremos ver as divisões já vistas
+    # TODO: Isto deve estar errado!
+    #   Só queremos ver as divisões já vistas
 
     # Número de divisões com enfermeiros
     nB = 0
