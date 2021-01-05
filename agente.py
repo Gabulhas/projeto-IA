@@ -252,7 +252,7 @@ def resp3():
     else:
         for parts in nx.shortest_path(G, "EU", div_mais_perto.nomeDivisao):
             # Talvez isto não seja necessário
-            if "_" not in parts or parts not in ["EU", "escadas"]:
+            if "_" not in parts and parts not in ["EU", "escadas"]:
                 print(parts, end="->")
 
     lista = list(G.edges("EU"))
@@ -389,11 +389,14 @@ def resp7():
 
     for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
         tot = tot + 1
-        if len(divisao.objetos["cadeiras"] > 0):
+        if len(divisao.objetos["cadeiras"]) > 0:
             pC = pC + 1
-            if len(divisao.objetos["livros"] > 0):
+            if len(divisao.objetos["livros"]) > 0:
                 pLC = pLC + 1
 
+    if pC == 0 or tot == 0:
+        print("Erro no cálculo da probabilidade.")
+        return
     pLC = pLC / pC  # prob de encontrar livro em todas as div que têm cadeiras
     pC = pC / tot  # prob de ter uma cadeira em todas as divisões
 
@@ -416,8 +419,8 @@ def resp8():
     for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
         if len(divisao.objetos["enfermeiros"]) > 0:
             nB = nB + 1
-        if len(divisao.objetos["doentes"]) > 0:
-            nAiB = nAiB + 1
+            if len(divisao.objetos["doentes"]) > 0:
+                nAiB = nAiB + 1
 
     if nB != 0:
         p = nAiB / nB
