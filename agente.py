@@ -248,12 +248,12 @@ def resp3():
 
     if not div_mais_perto:
         print("Sala Enfermeiros não encontrada")
-        return
 
-    for parts in nx.shortest_path(G, "EU", div_mais_perto.nomeDivisao):
-        # Talvez isto não seja necessário
-        if "_" not in parts or parts not in ["EU", "escadas"]:
-            print(parts, end="->")
+    else:
+        for parts in nx.shortest_path(G, "EU", div_mais_perto.nomeDivisao):
+            # Talvez isto não seja necessário
+            if "_" not in parts or parts not in ["EU", "escadas"]:
+                print(parts, end="->")
 
     lista = list(G.edges("EU"))
     G.remove_edges_from(lista)
@@ -405,8 +405,7 @@ def resp7():
 
 # 8. Se encontrares um enfermeiro numa divisão, qual é a probabilidade de estar lá um doente?
 def resp8():
-    # TODO: Isto deve estar errado!
-    #   Só queremos ver as divisões já vistas
+    # Só queremos ver as divisões já vistas
 
     # Número de divisões com enfermeiros
     nB = 0
@@ -414,14 +413,14 @@ def resp8():
     # Número de divisões com enfermeiros e doentes
     nAiB = 0
 
-    divisões_visitadas = [divisao for divisao in lista_Divisoes if divisao.descoberta]
-
-    for divisao in divisões_visitadas:
-
+    for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
         if len(divisao.objetos["enfermeiros"]) > 0:
             nB = nB + 1
-            if len(divisao.objetos["doentes"]) > 0:
-                nAiB = nAiB + 1
+        if len(divisao.objetos["doentes"]) > 0:
+            nAiB = nAiB + 1
 
-    print(nAiB // nB)
-    pass
+    if nB != 0:
+        p = nAiB / nB
+        print(p)
+    else:
+        print("Não foi possivel responder.")
