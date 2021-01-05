@@ -16,6 +16,8 @@ colocar aqui os nomes e número de aluno:
 # TODO limpar código de mostar plots
 
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
 
 import time
 import math
@@ -229,6 +231,9 @@ def resp2():
 # 3. Qual o caminho para a sala de enfermeiros mais próxima?
 def resp3():
     G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    G.add_edge("EU", div_Atual.nomeDivisao,
+               weight=distance_between_points(posicao_atual[0], posicao_atual[1], div_Atual.medio[0],
+                                              div_Atual.medio[1]))
     ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
 
     div_mais_perto = None
@@ -268,6 +273,9 @@ def ligar_todos_vizinhos(grafo):
 def resp4():
     # ADICIONAR VIZINHOS ÁS INTERSEÇÔES
     G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    G.add_edge("EU", div_Atual.nomeDivisao,
+               weight=distance_between_points(posicao_atual[0], posicao_atual[1], div_Atual.medio[0],
+                                              div_Atual.medio[1]))
     ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
     tempG = G.copy()
     ligar_todos_vizinhos(tempG)
@@ -303,6 +311,9 @@ def resp5():
 
     # ADICIONAR VIZINHOS ÁS INTERSEÇÔES
     G.add_node("EU", pos=(posicao_atual[0], posicao_atual[1]))
+    G.add_edge("EU", div_Atual.nomeDivisao,
+               weight=distance_between_points(posicao_atual[0], posicao_atual[1], div_Atual.medio[0],
+                                              div_Atual.medio[1]))
     ligar_vizinhos(G, "EU", div_Atual.nomeDivisao, posicao_atual[0], posicao_atual[1])
     tempG = G.copy()
 
@@ -323,6 +334,7 @@ def resp5():
 # 6. Quanto tempo achas que falta até ficares sem bateria?
 
 def resp6():
+    """
     # TODO ACABAR ESTA
     trend = np.polyfit(historico_tempos, historico_bateria, 1)
     trendpoly = np.poly1d(trend)
@@ -333,6 +345,36 @@ def resp6():
     print("Faltam ", str(int(roots[0]) - ultima_time_stamp), "segundos")
     plt.plot(historico_tempos, historico_bateria, '.')
     plt.plot(historico_tempos, trendpoly(historico_tempos))
+    plt.show()
+    """
+    pre_process = PolynomialFeatures(degree=2)
+    X = historico_bateria
+    y = historico_tempos
+    X = np.array(X).reshape((len(X), 1))
+    pre_process = PolynomialFeatures(degree=2)
+
+    X_poly = pre_process.fit_transform(X)
+
+    pr_model = LinearRegression()
+
+    pr_model.fit(X_poly, y)
+
+    y_pred = pr_model.predict(X_poly)
+
+    bateria_a_zero_timestamp = pr_model.predict(pre_process.fit_transform([[0]]))
+    zeros_ = [x for x in bateria_a_zero_timestamp if x > 0]
+    if len(bateria_a_zero_timestamp) < 1 or len(zeros_) < 1:
+        print("Não foi possivel prever o tempo. Espere mais um pouco.")
+        return
+
+    print(zeros_[0] - historico_tempos[
+        len(historico_tempos) - 1])
+
+    print(zeros_[0])
+    plt.scatter(X, y, c="black")
+    plt.xlabel("Timestamps")
+    plt.ylabel("Baterias")
+    plt.plot(X, y_pred)
     plt.show()
 
 
