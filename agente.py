@@ -380,27 +380,29 @@ def resp6():
 
 # 7. Qual a probabilidade de encontrar um livro numa divisão, se já encontraste uma cadeira?
 def resp7():
-    pC = 0  # existir uma cadeira na divisão
-    pLC = 0  # pelo menos 1 livro e 1 cadeira na mesma div
-    tot = 0
+    nC = 0  # existir uma cadeira na divisão
+    nLeC = 0  # pelo menos 1 livro e 1 cadeira na mesma div
 
     # probabilidade condicionada (encontrar um livro, sabendo que já foi encontrada uma cadeira)
     # P(Livro | Cadeira) = P (LeC) / P(C)
+    div_vistas = [divisao for divisao in lista_Divisoes if divisao.descoberta]
 
-    for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
-        tot = tot + 1
+    tot = len(div_vistas)
+
+    for divisao in div_vistas:
         if len(divisao.objetos["cadeiras"]) > 0:
-            pC = pC + 1
+            nC = nC + 1
             if len(divisao.objetos["livros"]) > 0:
-                pLC = pLC + 1
+                nLeC = nLeC + 1
 
-    if pC == 0 or tot == 0:
+    if nC == 0 or tot == 0:
         print("Erro no cálculo da probabilidade.")
         return
-    pLC = pLC / pC  # prob de encontrar livro em todas as div que têm cadeiras
-    pC = pC / tot  # prob de ter uma cadeira em todas as divisões
 
-    print(pLC / pC)
+    pLeC = nLeC / tot
+    pL = nC / tot
+
+    print(pLeC / pL)
 
     # if len(divisao.objetos["livros"] > 0) and len(divisao.objetos["cadeiras"] > 0):
     #     pLC = pLC + 1
@@ -412,18 +414,22 @@ def resp8():
 
     # Número de divisões com enfermeiros
     nB = 0
-
     # Número de divisões com enfermeiros e doentes
     nAiB = 0
 
-    for divisao in [divisao for divisao in lista_Divisoes if divisao.descoberta]:
+    divisoes_visitadas = [divisao for divisao in lista_Divisoes if divisao.descoberta]
+
+    tot = len(divisoes_visitadas)
+    for divisao in divisoes_visitadas:
         if len(divisao.objetos["enfermeiros"]) > 0:
             nB = nB + 1
             if len(divisao.objetos["doentes"]) > 0:
                 nAiB = nAiB + 1
 
-    if nB != 0:
-        p = nAiB / nB
-        print(p)
+    if nB != 0 and tot != 0:
+        pAiB = nAiB / tot
+        PB = nB / tot
+
+        print(pAiB/PB)
     else:
         print("Não foi possivel responder.")

@@ -54,21 +54,6 @@ class Divisao:
         else:
             return "generico"
 
-    # Redundante
-    def tipar_divisao(self):
-        if len(self.objetos["camas"]) > 0:
-            self.tipoDivisao = "quarto"
-        elif len(self.objetos["cadeiras"]) > 0 and len(self.objetos["mesas"]) > 0:
-            self.tipoDivisao = "sala_Enfermeiros"
-        elif len(self.objetos["cadeiras"]) > 2 and len(self.objetos["mesas"]) == 0:
-            self.tipoDivisao = "sala_Espera"
-        else:
-            self.tipoDivisao = "generico"
-
-        # • quarto: tem sempre pelo menos uma cama
-        # • sala de enfermeiros: não tem camas e tem cadeiras e mesas
-        # • sala de espera: tem mais de 2 cadeiras e não tem mesas nem camas
-
     def esta_dentro(self, x, y):
         if self.x0 <= x < self.x1 and self.y0 <= y < self.y1:
             return True
